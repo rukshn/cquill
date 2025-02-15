@@ -1,0 +1,38 @@
+{
+  "name": "cql",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc -b && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@radix-icons/vue": "^1.0.0",
+    "@vueuse/core": "^12.5.0",
+    "antlr4": "^4.13.2",
+    "antlr4ng": "^3.0.14",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "hotkeys-js": "^3.13.9",
+    "install": "^0.13.0",
+    "monaco-editor": "^0.52.2",
+    "radix-vue": "^1.9.13",
+    "tailwind-merge": "^3.0.1",
+    "tailwindcss-animate": "^1.0.7",
+    "vue": "^3.5.13"
+  },
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^28.0.2",
+    "@tailwindcss/postcss": "^4.0.6",
+    "@types/node": "^22.13.1",
+    "@vitejs/plugin-vue": "^5.2.1",
+    "@vue/tsconfig": "^0.7.0",
+    "autoprefixer": "^10.4.20",
+    "tailwindcss": "3",
+    "typescript": "~5.6.2",
+    "vite": "^6.0.5",
+    "vue-tsc": "^2.2.0"
+  }
+}
