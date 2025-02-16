@@ -1,4 +1,6 @@
-# CQuill
+# 🖋️ CQuill
+
+https://github.com/user-attachments/assets/e1337f50-a98b-4874-8d2a-38c47ce2fddd
 
 A visual editor to writing Clinical Quality Language (CQL) queries.
 
