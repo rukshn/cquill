@@ -8,6 +8,8 @@ import hotkeys from "hotkeys-js";
 import { cqlLexer } from "@/lib/cqlLexer";
 import { cqlParser } from "@/lib/cqlParser";
 import * as monaco from "monaco-editor";
+import {oneDarkPro} from "@/theme/onedarkpro";
+
 import {
   cqlMonarchLanguage,
   languageConfiguration,
@@ -35,6 +37,7 @@ const parseCql = () => {
 };
 
 const searchQueryInput = useTemplateRef("searchQueryInput");
+
 const readCodeSystem = (e: any) => {
   const file = e.target.files || e.dataTransfer.files;
   if (!file.length) return;
@@ -48,7 +51,7 @@ const readCodeSystem = (e: any) => {
       (c: { code: string; display: string }) => ({
         code: c.code,
         display: c.display,
-      }),
+      })
     );
   };
   fileReader.readAsText(file[0]);
@@ -74,7 +77,7 @@ const searchResult: Ref<{ code: string; display: string }[]> = computed(() => {
   return codeSystem.value.filter(
     (c) =>
       c.code.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      c.display.toLowerCase().includes(searchQuery.value.toLowerCase()),
+      c.display.toLowerCase().includes(searchQuery.value.toLowerCase())
   );
 });
 
@@ -88,12 +91,12 @@ onMounted(() => {
   monaco.languages.register({ id: "cql" });
   monaco.languages.setMonarchTokensProvider("cql", cqlMonarchLanguage);
   monaco.languages.setLanguageConfiguration("cql", languageConfiguration);
-
+  monaco.editor.defineTheme("onedarkpro", oneDarkPro as monaco.editor.IStandaloneThemeData);
   monaco.languages.registerCompletionItemProvider("cql", {
     triggerCharacters: ['"', "'"],
     provideCompletionItems: (
       model: monaco.editor.ITextModel,
-      position: monaco.Position,
+      position: monaco.Position
     ) => {
       const word = model.getWordUntilPosition(position);
       const range = {
@@ -103,7 +106,7 @@ onMounted(() => {
         endColumn: word.endColumn,
       };
       const suggestions = codeSystem.value.map((c) => ({
-        label: c.code,
+        label: c.display,
         kind: monaco.languages.CompletionItemKind.Text,
         detail: c.display,
         insertText: c.code,
@@ -118,7 +121,7 @@ onMounted(() => {
     if (!editorElement) return;
     const editor = monaco.editor.create(editorElement, {
       value: ["library calc"].join("\n"),
-      theme: "vs-dark",
+      theme: "onedarkpro",
       language: "cql",
     });
   }
@@ -128,51 +131,56 @@ defineProps<{ msg: string }>();
 </script>
 
 <template>
-  <div class="grid gap-4">
-    <div>
-      <Label>Select Code System File</Label>
-      <Input
-        type="file"
-        v-on:change="readCodeSystem"
-        accept=".json,text/json"
-      />
-    </div>
-    <div>
-      <Label>Search for code</Label>
-      <Input
-        type="text"
-        ref="searchQueryInput"
-        placeholder="Start typing to search for codes"
-        v-model="searchQuery"
-      />
-    </div>
-    <div>
+  <div class="grid grid-cols-6 gap-4">
+    <div class="col-span-4 h-screen">
       <Label>CQL</Label>
-      <div id="editor" class="h-[300px]"></div>
+      <div id="editor" class="h-screen w-full"></div>
       <Button v-on:click="parseCql">Parse</Button>
     </div>
+
+    <div class="col-span-2">
+      <div>
+        <Label>Select Code System File</Label>
+        <Input
+          type="file"
+          v-on:change="readCodeSystem"
+          accept=".json,text/json"
+        />
+      </div>
+      <div>
+        <Label>Search for code</Label>
+        <Input
+          type="text"
+          ref="searchQueryInput"
+          placeholder="Start typing to search for codes"
+          v-model="searchQuery"
+        />
+      </div>
+      <div>
+        <Table>
+          <TableCaption>Code System Results</TableCaption>
+          <TableHeader>
+            <TableRow>
+              <TableHead class="w-[99px]">#</TableHead>
+              <TableHead>Code</TableHead>
+              <TableHead>Display</TableHead>
+              <TableHead>Copy Code</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            <TableRow v-for="(concept, index) in searchResult" :key="index">
+              <TableCell class="w-[99px]">{{ index + 1 }}</TableCell>
+              <TableCell>{{ concept.code }}</TableCell>
+              <TableCell>{{ concept.display }}</TableCell>
+              <TableCell>
+                <Button v-on:click="copyCode(concept.code)">Copy</Button>
+              </TableCell>
+            </TableRow>
+          </TableBody>
+        </Table>
+      </div>
+    </div>
   </div>
-  <Table>
-    <TableCaption>Code System Results</TableCaption>
-    <TableHeader>
-      <TableRow>
-        <TableHead class="w-[100px]">#</TableHead>
-        <TableHead>Code</TableHead>
-        <TableHead>Display</TableHead>
-        <TableHead>Copy Code</TableHead>
-      </TableRow>
-    </TableHeader>
-    <TableBody>
-      <TableRow v-for="(concept, index) in searchResult" :key="index">
-        <TableCell class="w-[100px]">{{ index + 1 }}</TableCell>
-        <TableCell>{{ concept.code }}</TableCell>
-        <TableCell>{{ concept.display }}</TableCell>
-        <TableCell>
-          <Button v-on:click="copyCode(concept.code)">Copy</Button>
-        </TableCell>
-      </TableRow>
-    </TableBody>
-  </Table>
 </template>
 
 <style scoped></style>
