@@ -5,10 +5,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import hotkeys from "hotkeys-js";
-import {cqlLexer} from "@/lib/cqlLexer";
-import { cqlParser} from "@/lib/cqlParser";
+import { cqlLexer } from "@/lib/cqlLexer";
+import { cqlParser } from "@/lib/cqlParser";
 import * as monaco from "monaco-editor";
-import { cqlMonarchLanguage, languageConfiguration } from "@/lib/monacoTokenizer";
+import {
+  cqlMonarchLanguage,
+  languageConfiguration,
+} from "@/lib/monacoTokenizer";
 
 import {
   Table,
@@ -20,18 +23,18 @@ import {
   TableCell,
 } from "@/components/ui/table";
 
-const cql = ref("")
+const cql = ref("");
 
 const parseCql = () => {
- const chars = antlr4.CharStream.fromString(cql.value)
- const lexer = new cqlLexer(chars)
- const tokens = new antlr4.CommonTokenStream(lexer)
- const parser = new cqlParser(tokens)
- const tree = parser.query()
- console.log(tree)
-}
+  const chars = antlr4.CharStream.fromString(cql.value);
+  const lexer = new cqlLexer(chars);
+  const tokens = new antlr4.CommonTokenStream(lexer);
+  const parser = new cqlParser(tokens);
+  const tree = parser.query();
+  console.log(tree);
+};
 
-const searchQueryInput = useTemplateRef("searchQueryInput")
+const searchQueryInput = useTemplateRef("searchQueryInput");
 const readCodeSystem = (e: any) => {
   const file = e.target.files || e.dataTransfer.files;
   if (!file.length) return;
@@ -45,25 +48,25 @@ const readCodeSystem = (e: any) => {
       (c: { code: string; display: string }) => ({
         code: c.code,
         display: c.display,
-      })
+      }),
     );
   };
   fileReader.readAsText(file[0]);
 };
 
 hotkeys("/", (event, handler) => {
-  event.preventDefault()
-  switch(handler.key) {
+  event.preventDefault();
+  switch (handler.key) {
     case "/":
       searchQuery.value = "";
       if (searchQueryInput.value) {
-      searchQueryInput.value.$el.focus()
+        searchQueryInput.value.$el.focus();
       }
       break;
     default:
       break;
   }
-})
+});
 
 const codeSystem: Ref<{ code: string; display: string }[]> = ref([]);
 const searchResult: Ref<{ code: string; display: string }[]> = computed(() => {
@@ -71,7 +74,7 @@ const searchResult: Ref<{ code: string; display: string }[]> = computed(() => {
   return codeSystem.value.filter(
     (c) =>
       c.code.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      c.display.toLowerCase().includes(searchQuery.value.toLowerCase())
+      c.display.toLowerCase().includes(searchQuery.value.toLowerCase()),
   );
 });
 
@@ -82,39 +85,43 @@ const copyCode = (e: any) => {
 };
 
 onMounted(() => {
+  monaco.languages.register({ id: "cql" });
+  monaco.languages.setMonarchTokensProvider("cql", cqlMonarchLanguage);
+  monaco.languages.setLanguageConfiguration("cql", languageConfiguration);
 
-monaco.languages.register({ id: "cql" });
-monaco.languages.setMonarchTokensProvider("cql", cqlMonarchLanguage);
-monaco.languages.setLanguageConfiguration("cql", languageConfiguration)
-
-monaco.languages.registerCompletionItemProvider('cql', {
-  triggerCharacters: ['"', "'"],
-  provideCompletionItems: (model: monaco.editor.ITextModel, position: monaco.Position) => {
-    const word = model.getWordUntilPosition(position);
-    const range = {
-      startLineNumber: position.lineNumber,
-      endLineNumber: position.lineNumber,
-      startColumn: word.startColumn,
-      endColumn: word.endColumn
-    };
-    const suggestions = codeSystem.value.map((c) => ({
-      label: c.display,
-      kind: monaco.languages.CompletionItemKind.Text,
-      detail: c.display,
-      insertText: c.code,
-      range: range,
-    }));
-    return { suggestions };
-  }
-});
-
-if (document) {
-  const editorElement = document.getElementById("editor");
-  if (!editorElement) return;
-  const editor = monaco.editor.create(editorElement, {
-    value: ["library calc"].join("\n"), theme: "vs-dark", language: "cql",
+  monaco.languages.registerCompletionItemProvider("cql", {
+    triggerCharacters: ['"', "'"],
+    provideCompletionItems: (
+      model: monaco.editor.ITextModel,
+      position: monaco.Position,
+    ) => {
+      const word = model.getWordUntilPosition(position);
+      const range = {
+        startLineNumber: position.lineNumber,
+        endLineNumber: position.lineNumber,
+        startColumn: word.startColumn,
+        endColumn: word.endColumn,
+      };
+      const suggestions = codeSystem.value.map((c) => ({
+        label: c.code,
+        kind: monaco.languages.CompletionItemKind.Text,
+        detail: c.display,
+        insertText: c.code,
+        range: range,
+      }));
+      return { suggestions };
+    },
   });
-}
+
+  if (document) {
+    const editorElement = document.getElementById("editor");
+    if (!editorElement) return;
+    const editor = monaco.editor.create(editorElement, {
+      value: ["library calc"].join("\n"),
+      theme: "vs-dark",
+      language: "cql",
+    });
+  }
 });
 
 defineProps<{ msg: string }>();
@@ -139,11 +146,11 @@ defineProps<{ msg: string }>();
         v-model="searchQuery"
       />
     </div>
-  <div>
-    <Label>CQL</Label>
-    <div id="editor" class="h-[300px]"></div>
-    <Button v-on:click="parseCql">Parse</Button>
-  </div>
+    <div>
+      <Label>CQL</Label>
+      <div id="editor" class="h-[300px]"></div>
+      <Button v-on:click="parseCql">Parse</Button>
+    </div>
   </div>
   <Table>
     <TableCaption>Code System Results</TableCaption>
