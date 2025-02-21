@@ -8,7 +8,7 @@ import hotkeys from "hotkeys-js";
 import { cqlLexer } from "@/lib/cqlLexer";
 import { cqlParser } from "@/lib/cqlParser";
 import * as monaco from "monaco-editor";
-import {oneDarkPro} from "@/theme/onedarkpro";
+import { oneDarkPro } from "@/theme/onedarkpro";
 
 import {
   cqlMonarchLanguage,
@@ -30,8 +30,34 @@ const cql = ref("");
 const searchQueryInput = useTemplateRef("searchQueryInput");
 const codeSystem: Ref<{ code: string; display: string }[]> = ref([]);
 const searchQuery = ref("");
+const definition: Ref<{ code: string; display: string } | null> = ref(null);
+const definitionPosition: Ref<monaco.Position | null> = ref(null);
+const definitionRange: Ref<monaco.Range | null> = ref(null);
+const cqlWordPattern = /[a-zA-Z][a-zA-Z0-9_]*|"[^"]*"|'[^']*'|\d+(\.\d+)?|\$\{[^}]*\}/g;
 
-// Define functions 
+
+let editor: monaco.editor.IStandaloneCodeEditor;
+const contentWidgetId = {
+  allowEditorOverflow: true,
+  getDomNode: () => {
+    const node = document.createElement("div");
+    node.setAttribute("id", "definition");
+    node.innerHTML = definition.value?.display || "";
+    return node;
+  },
+  getPosition: () => ({
+    position: {
+      lineNumber: definitionPosition.value?.lineNumber || 0,
+      column: definitionPosition.value?.column || 0,
+    },
+    preference: [monaco.editor.ContentWidgetPositionPreference.BELOW],
+  }),
+  getId: function (): string {
+    return "definition";
+  },
+};
+
+// Function definitions 
 const parseCql = () => {
   const chars = antlr4.CharStream.fromString(cql.value);
   const lexer = new cqlLexer(chars);
@@ -41,9 +67,8 @@ const parseCql = () => {
   console.log(tree);
 };
 
-
 /**
- * 
+ *
  * @param e file input element
  * @returns a codeSystem mapped to the codeSystem variable
  */
@@ -66,12 +91,15 @@ const readCodeSystem = (e: any) => {
   fileReader.readAsText(file[0]);
 };
 
-/** 
+/**
  * Define hotkeys for the web-app
  */
-hotkeys("/", (event, handler) => {
+hotkeys("ctrl+,,/,r,f", function (event, handler) {
   event.preventDefault();
   switch (handler.key) {
+    case "ctrl+,":
+      editor.focus();
+      break;
     case "/":
       searchQuery.value = "";
       if (searchQueryInput.value) {
@@ -79,7 +107,7 @@ hotkeys("/", (event, handler) => {
       }
       break;
     default:
-      break;
+      alert(event);
   }
 });
 
@@ -97,7 +125,7 @@ const searchResult: Ref<{ code: string; display: string }[]> = computed(() => {
 });
 
 /**
- * 
+ *
  * @param e code to be copied
  * @returns copies the code to the clipboard
  */
@@ -116,7 +144,10 @@ onMounted(() => {
   monaco.languages.register({ id: "cql" });
   monaco.languages.setMonarchTokensProvider("cql", cqlMonarchLanguage);
   monaco.languages.setLanguageConfiguration("cql", languageConfiguration);
-  monaco.editor.defineTheme("onedarkpro", oneDarkPro as monaco.editor.IStandaloneThemeData);
+  monaco.editor.defineTheme(
+    "onedarkpro",
+    oneDarkPro as monaco.editor.IStandaloneThemeData
+  );
   monaco.languages.registerCompletionItemProvider("cql", {
     triggerCharacters: ['"', "'"],
     provideCompletionItems: (
@@ -131,7 +162,7 @@ onMounted(() => {
         endColumn: word.endColumn,
       };
       const suggestions = codeSystem.value.map((c) => ({
-        label: c.display,
+        label: c.code,
         kind: monaco.languages.CompletionItemKind.Text,
         detail: c.display,
         insertText: c.code,
@@ -144,14 +175,70 @@ onMounted(() => {
   if (document) {
     const editorElement = document.getElementById("editor");
     if (!editorElement) return;
-    const editor = monaco.editor.create(editorElement, {
+    editor = monaco.editor.create(editorElement, {
       value: ["library calc"].join("\n"),
       theme: "onedarkpro",
       language: "cql",
-    });
+    })
   }
+
+    /** 
+    * Add content widget to the editor
+    * To display the definition of the code
+    */
+  editor.onMouseUp((e) => {
+    if (e.target.type === monaco.editor.MouseTargetType.CONTENT_TEXT) {
+      gotoDefinition();
+      console.log(definition.value);
+
+      editor.removeContentWidget(contentWidgetId);
+
+      editor.addContentWidget(contentWidgetId);
+    } else {
+      editor.removeContentWidget(contentWidgetId);
+    }
+  });
 });
 
+
+/**
+ * Goto definition of a code, 
+ * the definition is derived from the display element of the codeSystem concept
+ * @returns sets the definition value based on the word clicked 
+ */
+const gotoDefinition = () => {
+  const position = editor.getPosition();
+  if (!position) {
+    definition.value = null;
+    return;
+  }
+  console.log(position)
+  const word = editor.getModel()?.getWordAtPosition(position);
+  console.log(word);
+  if (!word) {
+    definition.value = null;
+    return;
+  }
+
+  const range = new monaco.Range(
+    position.lineNumber,
+    word.startColumn,
+    position.lineNumber,
+    word.endColumn
+  );
+
+  const findDefinition = codeSystem.value.filter((c) => c.code === word.word);
+
+  if (!findDefinition.length) {
+    definition.value = null;
+  } else if (findDefinition[0].code === definition.value?.code) {
+    definition.value = null;
+  } else {
+    definition.value = findDefinition[0];
+    definitionPosition.value = position;
+    definitionRange.value = range;
+  }
+};
 </script>
 
 <template>
