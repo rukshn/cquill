@@ -4,13 +4,22 @@ https://github.com/user-attachments/assets/e1337f50-a98b-4874-8d2a-38c47ce2fddd
 
 A visual editor to writing Clinical Quality Language (CQL) queries.
 
-Built with Vite, Vue, and Tailwind CSS.
+## Features
 
-- Syntax highlighting.
+- CQL syntax highlighting.
 - Code autocompletion.
 - Runs completely within the browser.
 - No data sent to any server.
-- Use CodeSystem from OCL, HAPI FHIR server, or local JSON file.
+- Read FHIR compatible `CodeSystem`
+
+## Currently does not support 
+
+- Saving CQL 
+- No backend
+
+## Potential roadmap 
+
+- Use CodeSystem from OCL, HAPI FHIR server. 
 
 Still under development.
 

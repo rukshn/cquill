@@ -25,8 +25,13 @@ import {
   TableCell,
 } from "@/components/ui/table";
 
+// Define variables
 const cql = ref("");
+const searchQueryInput = useTemplateRef("searchQueryInput");
+const codeSystem: Ref<{ code: string; display: string }[]> = ref([]);
+const searchQuery = ref("");
 
+// Define functions 
 const parseCql = () => {
   const chars = antlr4.CharStream.fromString(cql.value);
   const lexer = new cqlLexer(chars);
@@ -36,8 +41,12 @@ const parseCql = () => {
   console.log(tree);
 };
 
-const searchQueryInput = useTemplateRef("searchQueryInput");
 
+/**
+ * 
+ * @param e file input element
+ * @returns a codeSystem mapped to the codeSystem variable
+ */
 const readCodeSystem = (e: any) => {
   const file = e.target.files || e.dataTransfer.files;
   if (!file.length) return;
@@ -57,6 +66,9 @@ const readCodeSystem = (e: any) => {
   fileReader.readAsText(file[0]);
 };
 
+/** 
+ * Define hotkeys for the web-app
+ */
 hotkeys("/", (event, handler) => {
   event.preventDefault();
   switch (handler.key) {
@@ -71,7 +83,10 @@ hotkeys("/", (event, handler) => {
   }
 });
 
-const codeSystem: Ref<{ code: string; display: string }[]> = ref([]);
+/**
+ * computed when the search term is changed
+ * @returns a search result based on the search query
+ */
 const searchResult: Ref<{ code: string; display: string }[]> = computed(() => {
   if (!codeSystem.value.length) return [];
   return codeSystem.value.filter(
@@ -81,12 +96,22 @@ const searchResult: Ref<{ code: string; display: string }[]> = computed(() => {
   );
 });
 
-const searchQuery = ref("");
-
+/**
+ * 
+ * @param e code to be copied
+ * @returns copies the code to the clipboard
+ */
 const copyCode = (e: any) => {
   navigator.clipboard.writeText(e);
 };
 
+/**
+ * On webapplication mounted
+ * Initialize monaco editor
+ * Register cql language
+ * Set monarch tokens provider
+ * Generates autocomplete based on the coseSystem
+ */
 onMounted(() => {
   monaco.languages.register({ id: "cql" });
   monaco.languages.setMonarchTokensProvider("cql", cqlMonarchLanguage);
@@ -127,7 +152,6 @@ onMounted(() => {
   }
 });
 
-defineProps<{ msg: string }>();
 </script>
 
 <template>
