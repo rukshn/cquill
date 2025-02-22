@@ -9,6 +9,7 @@ import { cqlLexer } from "@/lib/cqlLexer";
 import { cqlParser } from "@/lib/cqlParser";
 import * as monaco from "monaco-editor";
 import { oneDarkPro } from "@/theme/onedarkpro";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 import {
   cqlMonarchLanguage,
@@ -33,8 +34,8 @@ const searchQuery = ref("");
 const definition: Ref<{ code: string; display: string } | null> = ref(null);
 const definitionPosition: Ref<monaco.Position | null> = ref(null);
 const definitionRange: Ref<monaco.Range | null> = ref(null);
-const cqlWordPattern = /[a-zA-Z][a-zA-Z0-9_]*|"[^"]*"|'[^']*'|\d+(\.\d+)?|\$\{[^}]*\}/g;
-
+const cqlWordPattern =
+  /[a-zA-Z][a-zA-Z0-9_]*|"[^"]*"|'[^']*'|\d+(\.\d+)?|\$\{[^}]*\}/g;
 
 let editor: monaco.editor.IStandaloneCodeEditor;
 const contentWidgetId = {
@@ -57,18 +58,59 @@ const contentWidgetId = {
   },
 };
 
-// Function definitions 
+// Function definitions
 const parseCql = () => {
-  const chars = antlr4.CharStream.fromString(cql.value);
+  const chars = antlr4.CharStream.fromString(editor.getValue());
   const lexer = new cqlLexer(chars);
   const tokens = new antlr4.CommonTokenStream(lexer);
+  const errorListner = new antlr4.BaseErrorListener();
   const parser = new cqlParser(tokens);
+  parser.addErrorListener(errorListner);
+  errorListner.reportContextSensitivity = function (
+    recognizer,
+    dfa,
+    startIndex,
+    stopIndex,
+    prediction,
+    configs
+  ) {
+    console.log("context sensitivity");
+  };
+  errorListner.reportAttemptingFullContext = function (
+    recognizer,
+    dfa,
+    startIndex,
+    stopIndex,
+    conflictingAlts,
+    configs
+  ) {
+    console.log("full context");
+  };
+  errorListner.reportAmbiguity = function (
+    recognizer,
+    dfa,
+    startIndex,
+    stopIndex,
+    exact,
+    ambigAlts,
+    configs
+  ) {
+    console.log("ambiguity");
+  };
+  errorListner.syntaxError = function (
+    recognizer,
+    offendingSymbol,
+    line,
+    column,
+    msg,
+    e
+  ) {
+    console.log("line " + line + ":" + column + " " + msg);
+  };
   const tree = parser.query();
-  console.log(tree);
 };
 
 /**
- *
  * @param e file input element
  * @returns a codeSystem mapped to the codeSystem variable
  */
@@ -179,13 +221,13 @@ onMounted(() => {
       value: ["library calc"].join("\n"),
       theme: "onedarkpro",
       language: "cql",
-    })
+    });
   }
 
-    /** 
-    * Add content widget to the editor
-    * To display the definition of the code
-    */
+  /**
+   * Add content widget to the editor
+   * To display the definition of the code
+   */
   editor.onMouseUp((e) => {
     if (e.target.type === monaco.editor.MouseTargetType.CONTENT_TEXT) {
       gotoDefinition();
@@ -200,11 +242,10 @@ onMounted(() => {
   });
 });
 
-
 /**
- * Goto definition of a code, 
+ * Goto definition of a code,
  * the definition is derived from the display element of the codeSystem concept
- * @returns sets the definition value based on the word clicked 
+ * @returns sets the definition value based on the word clicked
  */
 const gotoDefinition = () => {
   const position = editor.getPosition();
@@ -212,7 +253,7 @@ const gotoDefinition = () => {
     definition.value = null;
     return;
   }
-  console.log(position)
+
   const word = editor.getModel()?.getWordAtPosition(position);
   console.log(word);
   if (!word) {
@@ -250,24 +291,26 @@ const gotoDefinition = () => {
     </div>
 
     <div class="col-span-2">
-      <div>
-        <Label>Select Code System File</Label>
-        <Input
-          type="file"
-          v-on:change="readCodeSystem"
-          accept=".json,text/json"
-        />
+      <div class="h-32">
+        <div>
+          <Label>Select Code System File</Label>
+          <Input
+            type="file"
+            v-on:change="readCodeSystem"
+            accept=".json,text/json"
+          />
+        </div>
+        <div>
+          <Label>Search for code</Label>
+          <Input
+            type="text"
+            ref="searchQueryInput"
+            placeholder="Start typing to search for codes"
+            v-model="searchQuery"
+          />
+        </div>
       </div>
-      <div>
-        <Label>Search for code</Label>
-        <Input
-          type="text"
-          ref="searchQueryInput"
-          placeholder="Start typing to search for codes"
-          v-model="searchQuery"
-        />
-      </div>
-      <div>
+      <ScrollArea class="h-[calc(100vh-128px)]">
         <Table>
           <TableCaption>Code System Results</TableCaption>
           <TableHeader>
@@ -289,7 +332,7 @@ const gotoDefinition = () => {
             </TableRow>
           </TableBody>
         </Table>
-      </div>
+      </ScrollArea>
     </div>
   </div>
 </template>
