@@ -10,15 +10,17 @@
   },
   "dependencies": {
     "@radix-icons/vue": "^1.0.0",
-    "@vueuse/core": "^12.5.0",
+    "@vueuse/core": "^12.7.0",
     "antlr4": "^4.13.2",
     "antlr4ng": "^3.0.14",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "hotkeys-js": "^3.13.9",
     "install": "^0.13.0",
+    "lucide-vue-next": "^0.475.0",
     "monaco-editor": "^0.52.2",
     "radix-vue": "^1.9.13",
+    "reka-ui": "^2.0.0",
     "tailwind-merge": "^3.0.1",
     "tailwindcss-animate": "^1.0.7",
     "vue": "^3.5.13"

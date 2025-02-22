@@ -26,6 +26,16 @@ import {
   TableCell,
 } from "@/components/ui/table";
 
+import {
+  Menubar,
+  MenubarContent,
+  MenubarItem,
+  MenubarMenu,
+  MenubarSeparator,
+  MenubarShortcut,
+  MenubarTrigger,
+} from "@/components/ui/menubar";
+
 // Define variables
 const cql = ref("");
 const searchQueryInput = useTemplateRef("searchQueryInput");
@@ -34,6 +44,7 @@ const searchQuery = ref("");
 const definition: Ref<{ code: string; display: string } | null> = ref(null);
 const definitionPosition: Ref<monaco.Position | null> = ref(null);
 const definitionRange: Ref<monaco.Range | null> = ref(null);
+const codeSystemInput = useTemplateRef("codeSystemInput");
 const cqlWordPattern =
   /[a-zA-Z][a-zA-Z0-9_]*|"[^"]*"|'[^']*'|\d+(\.\d+)?|\$\{[^}]*\}/g;
 
@@ -146,6 +157,11 @@ hotkeys("ctrl+,,/,r,f", function (event, handler) {
       searchQuery.value = "";
       if (searchQueryInput.value) {
         searchQueryInput.value.$el.focus();
+      }
+      break;
+    case "ctrl+o, cmd+o":
+      if (codeSystemInput.value) {
+        codeSystemInput.value.$el.click();
       }
       break;
     default:
@@ -283,18 +299,39 @@ const gotoDefinition = () => {
 </script>
 
 <template>
+  <Menubar>
+    <MenubarMenu>
+      <MenubarTrigger>File</MenubarTrigger>
+      <MenubarContent>
+        <MenubarItem @click="codeSystemInput?.$el.click()">
+          Open CodeSystem<MenubarShortcut>⌘O</MenubarShortcut>
+        </MenubarItem>
+        <MenubarItem>New Window</MenubarItem>
+        <MenubarSeparator />
+        <MenubarItem>Share</MenubarItem>
+        <MenubarSeparator />
+        <MenubarItem>Print</MenubarItem>
+      </MenubarContent>
+    </MenubarMenu>
+    <MenubarMenu>
+      <MenubarTrigger>View</MenubarTrigger>
+      <MenubarContent>
+        <MenubarItem>CQL Library</MenubarItem>
+      </MenubarContent>
+    </MenubarMenu>
+  </Menubar>
   <div class="grid grid-cols-6 gap-4">
     <div class="col-span-4 h-screen">
-      <Label>CQL</Label>
       <div id="editor" class="h-screen w-full"></div>
       <Button v-on:click="parseCql">Parse</Button>
     </div>
 
     <div class="col-span-2">
-      <div class="h-32">
-        <div>
+      <div class="h-16">
+        <div class="hidden">
           <Label>Select Code System File</Label>
           <Input
+            ref="codeSystemInput"
             type="file"
             v-on:change="readCodeSystem"
             accept=".json,text/json"
@@ -310,7 +347,7 @@ const gotoDefinition = () => {
           />
         </div>
       </div>
-      <ScrollArea class="h-[calc(100vh-128px)]">
+      <ScrollArea class="h-[calc(100vh-64px)]">
         <Table>
           <TableCaption>Code System Results</TableCaption>
           <TableHeader>
