@@ -45,8 +45,6 @@ const definition: Ref<{ code: string; display: string } | null> = ref(null);
 const definitionPosition: Ref<monaco.Position | null> = ref(null);
 const definitionRange: Ref<monaco.Range | null> = ref(null);
 const codeSystemInput = useTemplateRef("codeSystemInput");
-const cqlWordPattern =
-  /[a-zA-Z][a-zA-Z0-9_]*|"[^"]*"|'[^']*'|\d+(\.\d+)?|\$\{[^}]*\}/g;
 
 let editor: monaco.editor.IStandaloneCodeEditor;
 const contentWidgetId = {
@@ -78,49 +76,21 @@ const parseCql = () => {
   const parser = new cqlParser(tokens);
   parser.errorHandler = new antlr4.BailErrorStrategy();
   parser.addErrorListener(errorListner);
-  errorListner.reportContextSensitivity = function (
-    recognizer,
-    dfa,
-    startIndex,
-    stopIndex,
-    prediction,
-    configs
-  ) {
+  errorListner.reportContextSensitivity = function () {
     console.log("context sensitivity");
   };
-  errorListner.reportAttemptingFullContext = function (
-    recognizer,
-    dfa,
-    startIndex,
-    stopIndex,
-    conflictingAlts,
-    configs
-  ) {
+  errorListner.reportAttemptingFullContext = function () {
     console.log("full context");
   };
-  errorListner.reportAmbiguity = function (
-    recognizer,
-    dfa,
-    startIndex,
-    stopIndex,
-    exact,
-    ambigAlts,
-    configs
-  ) {
+  errorListner.reportAmbiguity = function () {
     console.log("ambiguity");
   };
-  errorListner.syntaxError = function (
-    recognizer,
-    offendingSymbol,
-    line,
-    column,
-    msg,
-    e
-  ) {
+  errorListner.syntaxError = function (line, column, msg, e) {
+    console.log(e);
     return { line: line, column: column, msg: msg };
   };
 
-  const tree = parser.query();
+  parser.query();
 };
 
 /**
@@ -265,6 +235,7 @@ onMounted(() => {
    */
   editor.onDidChangeModelContent(() => {
     const syntaxErrors = parseCql();
+    console.log(syntaxErrors);
   });
 });
 
@@ -310,6 +281,14 @@ const gotoDefinition = () => {
 
 <template>
   <Menubar>
+    <MenubarMenu>
+      <MenubarTrigger>CQuill</MenubarTrigger>
+      <MenubarContent>
+        <MenubarItem>Preferences</MenubarItem>
+        <MenubarSeparator />
+        <MenubarItem>About</MenubarItem>
+      </MenubarContent>
+    </MenubarMenu>
     <MenubarMenu>
       <MenubarTrigger>File</MenubarTrigger>
       <MenubarContent>
