@@ -37,7 +37,7 @@ import {
 } from "@/components/ui/menubar";
 
 // Define variables
-const cql = ref("");
+const view = ref("codes");
 const searchQueryInput = useTemplateRef("searchQueryInput");
 const codeSystem: Ref<{ code: string; display: string }[]> = ref([]);
 const searchQuery = ref("");
@@ -76,6 +76,7 @@ const parseCql = () => {
   const tokens = new antlr4.CommonTokenStream(lexer);
   const errorListner = new antlr4.BaseErrorListener();
   const parser = new cqlParser(tokens);
+  parser.errorHandler = new antlr4.BailErrorStrategy();
   parser.addErrorListener(errorListner);
   errorListner.reportContextSensitivity = function (
     recognizer,
@@ -116,8 +117,9 @@ const parseCql = () => {
     msg,
     e
   ) {
-    console.log("line " + line + ":" + column + " " + msg);
+    return { line: line, column: column, msg: msg };
   };
+
   const tree = parser.query();
 };
 
@@ -206,6 +208,7 @@ onMounted(() => {
     "onedarkpro",
     oneDarkPro as monaco.editor.IStandaloneThemeData
   );
+
   monaco.languages.registerCompletionItemProvider("cql", {
     triggerCharacters: ['"', "'"],
     provideCompletionItems: (
@@ -255,6 +258,13 @@ onMounted(() => {
     } else {
       editor.removeContentWidget(contentWidgetId);
     }
+  });
+
+  /**
+   * Parse the cql code on change
+   */
+  editor.onDidChangeModelContent(() => {
+    const syntaxErrors = parseCql();
   });
 });
 
@@ -306,17 +316,13 @@ const gotoDefinition = () => {
         <MenubarItem @click="codeSystemInput?.$el.click()">
           Open CodeSystem<MenubarShortcut>⌘O</MenubarShortcut>
         </MenubarItem>
-        <MenubarItem>New Window</MenubarItem>
-        <MenubarSeparator />
-        <MenubarItem>Share</MenubarItem>
-        <MenubarSeparator />
-        <MenubarItem>Print</MenubarItem>
       </MenubarContent>
     </MenubarMenu>
     <MenubarMenu>
       <MenubarTrigger>View</MenubarTrigger>
       <MenubarContent>
-        <MenubarItem>CQL Library</MenubarItem>
+        <MenubarItem @click="view = 'cqlLibrary'">CQL Library</MenubarItem>
+        <MenubarItem @click="view = 'codes'">Codes</MenubarItem>
       </MenubarContent>
     </MenubarMenu>
   </Menubar>
@@ -348,7 +354,7 @@ const gotoDefinition = () => {
         </div>
       </div>
       <ScrollArea class="h-[calc(100vh-64px)]">
-        <Table>
+        <Table v-if="view === 'codes'">
           <TableCaption>Code System Results</TableCaption>
           <TableHeader>
             <TableRow>
