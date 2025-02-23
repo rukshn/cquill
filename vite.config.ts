@@ -1,5 +1,5 @@
 import { fileURLToPath, URL } from "node:url";
-import commonjs from '@rollup/plugin-commonjs';
+import commonjs from "@rollup/plugin-commonjs";
 import autoprefixer from "autoprefixer";
 import tailwind from "tailwindcss";
 import { defineConfig } from "vite";
@@ -7,6 +7,7 @@ import vue from "@vitejs/plugin-vue";
 
 // https://vite.dev/config/
 export default defineConfig({
+  base: "https://rukshn.github.io/cquill/",
   plugins: [vue(), commonjs()],
   resolve: {
     alias: {
@@ -21,6 +22,6 @@ export default defineConfig({
   build: {
     commonjsOptions: {
       esmExternals: true,
-    }
-  }
+    },
+  },
 });
